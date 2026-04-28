@@ -1,0 +1,29 @@
+# ─── Web Framework ───────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ─── Template Engine & File Uploads ──────────────────────────────────────────
+jinja2>=3.1.4
+python-multipart>=0.0.9
+
+# ─── PDF Processing ──────────────────────────────────────────────────────────
+# PyMuPDF 1.25+ has pre-built wheels for Python 3.13
+pymupdf>=1.25.0
+pytesseract>=0.3.10
+pillow>=10.0.0
+
+# ─── Embeddings & Vector Store ───────────────────────────────────────────────
+sentence-transformers>=3.0.1   # Local embedding model (all-MiniLM-L6-v2)
+faiss-cpu>=1.8.0               # FAISS — vector similarity search
+
+# ─── LLM Integration ─────────────────────────────────────────────────────────
+groq>=0.9.0               # Groq SDK — FREE API (llama-3, mixtral, gemma)
+openai>=1.35.3            # OpenAI-compatible SDK — for xAI or OpenAI GPT
+
+# ─── Web Search & HTTP ───────────────────────────────────────────────────────
+duckduckgo-search>=6.2.0  # Zero-key web search for real-time results
+httpx>=0.27.0             # Async HTTP client for URL summarization
+
+# ─── Utilities ───────────────────────────────────────────────────────────────
+python-dotenv>=1.0.1      # Load environment variables from .env file
+numpy>=1.26.4             # Required by faiss-cpu and sentence-transformers
