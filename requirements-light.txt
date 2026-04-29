@@ -1,0 +1,26 @@
+# ─── Lightweight Requirements for Render.com Free Tier (512MB RAM) ─────────────
+# This file removes heavy dependencies to fit within memory limits
+
+# ─── Web Framework ───────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+
+# ─── Template Engine & File Uploads ──────────────────────────────────────────
+jinja2>=3.1.4
+python-multipart>=0.0.9
+
+# ─── LLM Integration ─────────────────────────────────────────────────────────
+groq>=0.9.0               # Groq SDK — FREE API (llama-3, mixtral, gemma)
+openai>=1.35.3            # OpenAI-compatible SDK — for xAI or OpenAI GPT
+
+# ─── Web Search & HTTP ───────────────────────────────────────────────────────
+duckduckgo-search>=6.2.0  # Zero-key web search for real-time results
+httpx>=0.27.0             # Async HTTP client for URL summarization
+
+# ─── Utilities ───────────────────────────────────────────────────────────────
+python-dotenv>=1.0.1      # Load environment variables from .env file
+
+# ─── REMOVED for memory constraints ───────────────────────────────────────────
+# - PyMuPDF, Tesseract, Pillow (PDF/image processing - too heavy)
+# - sentence-transformers, faiss-cpu, numpy (embeddings - too heavy)
+# - python-docx (Word processing - optional)

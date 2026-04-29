@@ -49,12 +49,41 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
 
 ## Deployment to Render.com
 
+### ⚠️ Memory Limit Warning
+
+The full version of this app requires more than 512MB RAM due to:
+- Embedding model (~90MB)
+- FAISS vector store
+- PDF/image processing libraries
+
+**For Render.com free tier (512MB RAM), use the lightweight version.**
+
+### Lightweight Version (Recommended for Free Tier)
+
+The lightweight version removes document processing to fit within 512MB:
+- ✅ Free chat with LLM
+- ✅ Web search
+- ✅ URL summarization
+- ❌ No PDF/image upload
+- ❌ No document analysis
+
+**To use lightweight version:**
+1. Use `requirements-light.txt` instead of `requirements.txt`
+2. Use `src/main_light.py` instead of `src/main.py`
+3. The `Procfile` is already configured for the lightweight version
+
+### Full Version (Requires Paid Tier)
+
+For the full version with document processing, you need:
+- Render.com paid tier (starting at $7/month for 1GB RAM)
+- Or use a different platform with higher memory limits
+
 ### Prerequisites
-- Render.com account (free tier)
+- Render.com account (free tier for lightweight, paid for full)
 - Git repository (GitHub, GitLab, or Bitbucket)
 - GROQ_API_KEY from https://console.groq.com
 
-### Step-by-Step Deployment
+### Step-by-Step Deployment (Lightweight Version)
 
 1. **Push code to Git:**
    ```bash
@@ -78,8 +107,8 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
    - **Region**: Choose nearest region
    - **Branch**: main
    - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+   - **Build Command**: `pip install -r requirements-light.txt`
+   - **Start Command**: `uvicorn src.main_light:app --host 0.0.0.0 --port $PORT`
    - **Instance Type**: Free (512MB RAM, 0.1 CPU)
 
 5. **Set Environment Variables:**
@@ -108,6 +137,7 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
 
 ### Troubleshooting
 
+- **Out of memory error**: Use the lightweight version with `requirements-light.txt`
 - **Check logs**: Go to your service → "Logs" tab
 - **Redeploy**: Click "Manual Deploy" → "Clear build cache & deploy"
 - **Environment variables**: Ensure all required variables are set
