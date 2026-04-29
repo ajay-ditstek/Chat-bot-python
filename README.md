@@ -47,101 +47,80 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
    http://localhost:8000
    ```
 
-## Deployment to Render.com
+## Deployment Options
 
-### ⚠️ Memory Limit Warning
+### Option 1: Streamlit Cloud (Recommended - Free with 1GB RAM)
 
-The full version of this app requires more than 512MB RAM due to:
-- Embedding model (~90MB)
-- FAISS vector store
-- PDF/image processing libraries
+Streamlit Cloud offers a free tier with 1GB RAM, which is sufficient for this app.
 
-**For Render.com free tier (512MB RAM), use the lightweight version.**
-
-### Lightweight Version (Recommended for Free Tier)
-
-The lightweight version removes document processing to fit within 512MB:
+**Features:**
 - ✅ Free chat with LLM
 - ✅ Web search
 - ✅ URL summarization
-- ❌ No PDF/image upload
-- ❌ No document analysis
+- ✅ 1GB RAM (vs 512MB on Render)
+- ✅ Easy deployment (just connect GitHub)
 
-**To use lightweight version:**
-1. Use `requirements-light.txt` instead of `requirements.txt`
-2. Use `src/main_light.py` instead of `src/main.py`
-3. The `Procfile` is already configured for the lightweight version
-
-### Full Version (Requires Paid Tier)
-
-For the full version with document processing, you need:
-- Render.com paid tier (starting at $7/month for 1GB RAM)
-- Or use a different platform with higher memory limits
-
-### Prerequisites
-- Render.com account (free tier for lightweight, paid for full)
-- Git repository (GitHub, GitLab, or Bitbucket)
+**Prerequisites:**
+- Streamlit Cloud account (free)
+- Git repository (GitHub)
 - GROQ_API_KEY from https://console.groq.com
 
-### Step-by-Step Deployment (Lightweight Version)
+**Step-by-Step Deployment:**
 
 1. **Push code to Git:**
    ```bash
    git add .
-   git commit -m "Ready for Render deployment"
+   git commit -m "Ready for Streamlit Cloud deployment"
    git push origin main
    ```
 
-2. **Sign up at Render.com:**
-   - Go to https://render.com
-   - Create a free account using GitHub/GitLab/Bitbucket
+2. **Sign up at Streamlit Cloud:**
+   - Go to https://share.streamlit.io
+   - Create a free account using GitHub
 
-3. **Create a new Web Service:**
-   - Click "New +" button
-   - Select "Web Service"
-   - Connect your Git repository
-   - Select the repository containing your project
+3. **Deploy your app:**
+   - Click "New app"
+   - Select your GitHub repository
+   - Select the branch: `main`
+   - Main file path: `app.py`
+   - Click "Deploy"
 
-4. **Configure the Web Service:**
-   - **Name**: nexus-ai (or any name you prefer)
-   - **Region**: Choose nearest region
-   - **Branch**: main
-   - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements-light.txt`
-   - **Start Command**: `uvicorn src.main_light:app --host 0.0.0.0 --port $PORT`
-   - **Instance Type**: Free (512MB RAM, 0.1 CPU)
-
-5. **Set Environment Variables:**
-   - Scroll to "Environment Variables" section
-   - Add:
+4. **Set Environment Variables:**
+   - Go to your app settings in Streamlit Cloud
+   - Add secrets:
      - `GROQ_API_KEY`: Your Groq API key
      - `LLM_PROVIDER`: `groq`
      - `GROQ_MODEL`: `llama-3.3-70b-versatile`
 
-6. **Deploy:**
-   - Click "Create Web Service"
-   - Render will automatically build and deploy your app
-   - Wait for the deployment to complete (check the "Logs" tab)
-
-7. **Access your app:**
-   - Once deployed, Render will provide a URL like: `https://nexus-ai.onrender.com`
+5. **Access your app:**
+   - Streamlit will provide a URL like `https://your-app.streamlit.app`
    - Visit the URL to test your application
 
-### Important Notes
-
-- **Ephemeral Storage**: Uploaded files are lost when the app redeploys or restarts
-- **Sleep Mode**: Free tier services spin down after 15 minutes of inactivity (wakes on first request, may take 30-60 seconds)
-- **Resource Limits**: Free tier has 512MB RAM and 0.1 CPU
-- **Build Time**: Free tier has limited build time (15 minutes per build)
+**Important Notes:**
+- **Sleep Mode**: Free tier apps sleep after inactivity (wakes on first request)
+- **Resource Limits**: Free tier has 1GB RAM
 - **Custom Domain**: Available on paid plans only
 
-### Troubleshooting
+### Option 2: Render.com (Not Recommended - Only 512MB RAM)
 
-- **Out of memory error**: Use the lightweight version with `requirements-light.txt`
-- **Check logs**: Go to your service → "Logs" tab
-- **Redeploy**: Click "Manual Deploy" → "Clear build cache & deploy"
-- **Environment variables**: Ensure all required variables are set
-- **Build failures**: Check the "Build Log" for dependency installation errors
+Render.com's free tier has only 512MB RAM, which is insufficient for this app even in lightweight mode.
+
+**If you still want to use Render.com:**
+- You must use the lightweight version (`requirements-light.txt`, `src/main_light.py`)
+- Even then, you may encounter out-of-memory errors
+- Consider upgrading to Render's paid tier ($7/month for 1GB RAM)
+
+### Option 3: Full Version (Document Processing)
+
+For the full version with PDF/image upload and document analysis, you need:
+- **Streamlit Cloud** (1GB RAM free tier) - Recommended
+- **Render.com paid tier** ($7/month for 1GB RAM)
+- **Railway.app** ($5 free credit, then paid)
+- **PythonAnywhere** (free tier, but limited)
+
+The full version requires:
+- `requirements.txt` (includes embeddings, FAISS, PDF processing)
+- `src/main.py` (full FastAPI app with document processing)
 
 ## Environment Variables
 
