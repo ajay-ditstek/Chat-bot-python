@@ -47,10 +47,10 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
    http://localhost:8000
    ```
 
-## Deployment to PythonAnywhere
+## Deployment to Render.com
 
 ### Prerequisites
-- PythonAnywhere account (free tier)
+- Render.com account (free tier)
 - Git repository (GitHub, GitLab, or Bitbucket)
 - GROQ_API_KEY from https://console.groq.com
 
@@ -58,107 +58,60 @@ A powerful AI assistant that can chat freely, analyze documents, search the web,
 
 1. **Push code to Git:**
    ```bash
-   git init
    git add .
-   git commit -m "Initial commit"
-   git remote add origin <your-git-repo-url>
-   git push -u origin main
+   git commit -m "Ready for Render deployment"
+   git push origin main
    ```
 
-2. **Sign up at PythonAnywhere:**
-   - Go to https://www.pythonanywhere.com
-   - Create a free account
+2. **Sign up at Render.com:**
+   - Go to https://render.com
+   - Create a free account using GitHub/GitLab/Bitbucket
 
-3. **Create a new Web App:**
-   - Go to the "Web" tab
-   - Click "Add a new web app"
-   - Choose "Manual Configuration"
-   - Select Python 3.10 or higher
-   - Click Next
+3. **Create a new Web Service:**
+   - Click "New +" button
+   - Select "Web Service"
+   - Connect your Git repository
+   - Select the repository containing your project
 
-4. **Configure the Web App:**
-   - **WSGI configuration file**: Set path to `/var/www/<your-username>_pythonanywhere_com_wsgi.py`
-   - **Working directory**: Set to your project folder
-   - **Virtualenv**: Create a new virtualenv (Python 3.10+)
+4. **Configure the Web Service:**
+   - **Name**: nexus-ai (or any name you prefer)
+   - **Region**: Choose nearest region
+   - **Branch**: main
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type**: Free (512MB RAM, 0.1 CPU)
 
-5. **Upload your code:**
-   - Go to the "Files" tab
-   - Navigate to your project folder
-   - Use "Upload a file" or clone from git:
-     ```bash
-     git clone <your-git-repo-url>
-     ```
-
-6. **Install dependencies:**
-   - Go to the "Consoles" tab
-   - Start a Bash console
-   - Navigate to your project folder
-   - Activate virtualenv:
-     ```bash
-     source ~/virtualenvs/<your-webapp-name>/bin/activate
-     ```
-   - Install requirements:
-     ```bash
-     pip install -r requirements.txt
-     ```
-
-7. **Configure WSGI:**
-   - Go to the "Web" tab
-   - Click on the "WSGI configuration file" link
-   - Replace the content with:
-     ```python
-     import os
-     import sys
-     from pathlib import Path
-
-     # Add project to path
-     project_home = '/home/<your-username>/<your-project-folder>'
-     if project_home not in sys.path:
-         sys.path = [project_home] + sys.path
-
-     os.environ.setdefault('PYTHONPATH', project_home)
-
-     from src.main import app
-     application = app
-     ```
-   - Save and close
-
-8. **Set Environment Variables:**
-   - Go to the "Web" tab
-   - Scroll to "Environment variables"
+5. **Set Environment Variables:**
+   - Scroll to "Environment Variables" section
    - Add:
      - `GROQ_API_KEY`: Your Groq API key
      - `LLM_PROVIDER`: `groq`
      - `GROQ_MODEL`: `llama-3.3-70b-versatile`
 
-9. **Configure Static Files:**
-   - Go to the "Web" tab
-   - Scroll to "Static files"
-   - Add:
-     - URL: `/static/`
-     - Directory: `/home/<your-username>/<your-project-folder>/static`
+6. **Deploy:**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your app
+   - Wait for the deployment to complete (check the "Logs" tab)
 
-10. **Reload the Web App:**
-    - Click the "Reload" button in the Web tab
-    - Wait for the app to restart
-
-11. **Test the deployment:**
-    - Visit `https://<your-username>.pythonanywhere.com`
-    - Test the chat functionality
+7. **Access your app:**
+   - Once deployed, Render will provide a URL like: `https://nexus-ai.onrender.com`
+   - Visit the URL to test your application
 
 ### Important Notes
 
 - **Ephemeral Storage**: Uploaded files are lost when the app redeploys or restarts
-- **Sleep Mode**: Free tier apps sleep after inactivity (wakes on first request)
-- **Resource Limits**: Free tier has 512MB RAM and limited CPU time
-- **No Custom Domain**: Free tier uses `yourusername.pythonanywhere.com`
+- **Sleep Mode**: Free tier services spin down after 15 minutes of inactivity (wakes on first request, may take 30-60 seconds)
+- **Resource Limits**: Free tier has 512MB RAM and 0.1 CPU
+- **Build Time**: Free tier has limited build time (15 minutes per build)
+- **Custom Domain**: Available on paid plans only
 
 ### Troubleshooting
 
-- **Check error logs**: Go to "Web" tab → "Error log"
-- **Check server log**: Go to "Web" tab → "Server log"
-- **Reload the app**: Click "Reload" button after making changes
-- **Virtualenv issues**: Reinstall dependencies in the virtualenv
+- **Check logs**: Go to your service → "Logs" tab
+- **Redeploy**: Click "Manual Deploy" → "Clear build cache & deploy"
+- **Environment variables**: Ensure all required variables are set
+- **Build failures**: Check the "Build Log" for dependency installation errors
 
 ## Environment Variables
 
