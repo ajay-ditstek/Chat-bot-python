@@ -105,7 +105,72 @@ Replit is the easiest platform for deploying Python apps with minimal setup.
 - **Resource Limits**: Free tier has 500MB-1GB RAM
 - **Easy to Use**: No SSH, no firewall configuration, just click and run
 
-### Option 2: Oracle Cloud Free Tier (Advanced - Up to 24GB RAM)
+### Option 2: Koyeb (Git-based, Free Tier with 512MB RAM)
+
+Koyeb offers Git-based deployment with Docker support and a free tier.
+
+**Features:**
+- ✅ Free chat with LLM
+- ✅ Web search
+- ✅ URL summarization
+- ⚠️ PDF/image upload may have memory issues (512MB limit)
+- ✅ Git-based deployment (auto-deploy on push)
+- ✅ Custom domains on paid plans
+
+**Prerequisites:**
+- Koyeb account (free)
+- GitHub repository with your code
+- GROQ_API_KEY from https://console.groq.com
+
+**Step-by-Step Deployment:**
+
+1. **Push code to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Ready for Koyeb deployment"
+   git push origin main
+   ```
+
+2. **Sign up at Koyeb:**
+   - Go to https://www.koyeb.com
+   - Create a free account
+
+3. **Create a new App:**
+   - Click "Create App"
+   - Select "GitHub" as the source
+   - Connect your GitHub account
+   - Select your repository
+
+4. **Configure Build:**
+   - Builder: Choose "Buildpacks" (auto-detects Python)
+   - OR choose "Docker" if you have a Dockerfile
+   - Python version: 3.10 or 3.11
+
+5. **Set Environment Variables:**
+   - Go to your app settings
+   - Add environment variables:
+     - `GROQ_API_KEY`: Your Groq API key
+     - `LLM_PROVIDER`: `groq`
+     - `GROQ_MODEL`: `llama-3.3-70b-versatile`
+
+6. **Configure Port:**
+   - In app settings, set the port to `8000`
+   - Koyeb will automatically detect and expose this port
+
+7. **Deploy:**
+   - Click "Deploy"
+   - Koyeb will build and deploy your app
+
+8. **Access Your App:**
+   - Koyeb will provide a URL like `https://your-app.koyeb.app`
+
+**Important Notes:**
+- **Sleep Mode**: Free tier apps sleep after inactivity (wakes on request)
+- **Memory Limit**: Free tier has 512MB RAM - may encounter out-of-memory errors with full version
+- **Use lightweight version**: If you get memory errors, use `requirements-light.txt` and `src/main_light.py`
+- **Auto-deploy**: Pushing to GitHub automatically redeploys
+
+### Option 3: Oracle Cloud Free Tier (Advanced - Up to 24GB RAM)
 
 Oracle Cloud offers the most resources but requires technical knowledge.
 
