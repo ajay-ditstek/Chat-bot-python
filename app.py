@@ -17,28 +17,34 @@ from dotenv import load_dotenv
 import streamlit as st
 
 # ─── Load environment variables ───────────────────────────────────────────────
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+# Streamlit Cloud uses secrets.toml, local development uses .env
+try:
+    BASE_DIR = Path(__file__).resolve().parent
+    load_dotenv(BASE_DIR / ".env")
+except:
+    pass  # .env file not required on Streamlit Cloud
 
-# ─── LLM Client ───────────────────────────────────────────────────────────────
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").lower()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-
-
-def _make_client():
-    """Create the LLM client."""
-    if LLM_PROVIDER == "groq":
-        from groq import Groq
-
-        if not GROQ_API_KEY:
-            raise RuntimeError("GROQ_API_KEY is not set in your .env file.")
-        return Groq(api_key=GROQ_API_KEY)
-    else:
-        raise RuntimeError(f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. Use: groq")
+# ─── LLM Client (lazy-loaded) ───────────────────────────────────────────────────
+_llm_client = None
 
 
-llm_client = _make_client()
+def get_llm_client():
+    """Get or create the LLM client (lazy-loaded)."""
+    global _llm_client
+    if _llm_client is None:
+        LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").lower()
+        GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+        GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+        if LLM_PROVIDER == "groq":
+            from groq import Groq
+
+            if not GROQ_API_KEY:
+                raise RuntimeError("GROQ_API_KEY is not set in your .env file.")
+            _llm_client = Groq(api_key=GROQ_API_KEY)
+        else:
+            raise RuntimeError(f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. Use: groq")
+    return _llm_client
 
 
 # ─── Web Search ───────────────────────────────────────────────────────────────
@@ -114,7 +120,9 @@ def generate_free_answer(user_question: str, conversation_history: list[dict]) -
         messages.append({"role": turn["role"], "content": turn["content"]})
     messages.append({"role": "user", "content": user_question})
 
-    response = llm_client.chat.completions.create(
+    client = get_llm_client()
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=messages,
         temperature=0.5,
@@ -153,7 +161,9 @@ def generate_web_answer(
         messages.append({"role": turn["role"], "content": turn["content"]})
     messages.append({"role": "user", "content": user_question})
 
-    response = llm_client.chat.completions.create(
+    client = get_llm_client()
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=messages,
         temperature=0.3,
@@ -179,7 +189,9 @@ def summarize_url_content(url: str, page_text: str) -> str:
     messages = [{"role": "system", "content": system_prompt}]
     messages.append({"role": "user", "content": "Summarize this page."})
 
-    response = llm_client.chat.completions.create(
+    client = get_llm_client()
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=messages,
         temperature=0.2,
