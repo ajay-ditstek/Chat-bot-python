@@ -13,7 +13,7 @@ pytesseract>=0.3.10
 pillow>=10.0.0
 
 # ─── Embeddings & Vector Store ───────────────────────────────────────────────
-sentence-transformers>=3.0.1   # Local embedding model (all-MiniLM-L6-v2)
+sentence-transformers>=3.0.1   # Local embedding model (paraphrase-MiniLM-L3-v2 for memory efficiency)
 faiss-cpu>=1.8.0               # FAISS — vector similarity search
 
 # ─── LLM Integration ─────────────────────────────────────────────────────────

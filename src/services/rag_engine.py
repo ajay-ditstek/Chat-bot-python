@@ -44,30 +44,41 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq").lower()
 
 # ── Groq settings (FREE) ─────────────────────────────────────────────────────
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # ── Vision model (Groq) ───────────────────────────────────────────────────────
 # Used for image analysis — requires a vision-capable model
-GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
+GROQ_VISION_MODEL = os.getenv(
+    "GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct"
+)
 
 # ── xAI settings (paid) ───────────────────────────────────────────────────────
-XAI_API_KEY  = os.getenv("XAI_API_KEY", "")
-XAI_MODEL    = os.getenv("XAI_MODEL", "Groq-3-mini")
+XAI_API_KEY = os.getenv("XAI_API_KEY", "")
+XAI_MODEL = os.getenv("XAI_MODEL", "Groq-3-mini")
 
 # ── OpenAI settings ───────────────────────────────────────────────────────────
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
 # Chunk sizes for splitting PDF text (in characters)
-CHUNK_SIZE    = 800
+CHUNK_SIZE = 800
 CHUNK_OVERLAP = 150
 
 # How many top chunks to retrieve for each user question
 TOP_K = 10
 
-# ─── Initialize embedding model once at import time ──────────────────────────
-print("Loading embedding model (first run may download ~90 MB)…")
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+# ─── Lazy loading for embedding model ───────────────────────────────────────
+_embedding_model = None
+
+
+def get_embedding_model():
+    """Lazy load the embedding model only when needed."""
+    global _embedding_model
+    if _embedding_model is None:
+        print("Loading embedding model (first run may download ~90 MB)…")
+        # Use smaller model for memory-constrained environments
+        _embedding_model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
+    return _embedding_model
 
 
 # ─── Initialize LLM client based on LLM_PROVIDER ─────────────────────────────
@@ -75,6 +86,7 @@ def _make_client():
     """Create the correct LLM client based on LLM_PROVIDER env var."""
     if LLM_PROVIDER == "groq":
         from groq import Groq
+
         if not GROQ_API_KEY:
             raise RuntimeError(
                 "GROQ_API_KEY is not set in your .env file.\n"
@@ -85,6 +97,7 @@ def _make_client():
 
     elif LLM_PROVIDER == "xai":
         from openai import OpenAI
+
         if not XAI_API_KEY:
             raise RuntimeError("XAI_API_KEY is not set in your .env file.")
         print(f"LLM provider: xAI   |  model: {XAI_MODEL}")
@@ -92,6 +105,7 @@ def _make_client():
 
     elif LLM_PROVIDER == "openai":
         from openai import OpenAI
+
         if not OPENAI_API_KEY:
             raise RuntimeError("OPENAI_API_KEY is not set in your .env file.")
         print(f"LLM provider: OpenAI  |  model: {OPENAI_MODEL}")
@@ -99,19 +113,22 @@ def _make_client():
 
     else:
         raise RuntimeError(
-            f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. "
-            "Choose: groq | xai | openai"
+            f"Unknown LLM_PROVIDER '{LLM_PROVIDER}'. " "Choose: groq | xai | openai"
         )
+
 
 llm_client = _make_client()
 
 
 def _get_model_name() -> str:
     """Return the active model name string."""
-    return {"groq": GROQ_MODEL, "xai": XAI_MODEL, "openai": OPENAI_MODEL}.get(LLM_PROVIDER, GROQ_MODEL)
+    return {"groq": GROQ_MODEL, "xai": XAI_MODEL, "openai": OPENAI_MODEL}.get(
+        LLM_PROVIDER, GROQ_MODEL
+    )
 
 
 # ─── PDF Text Extraction ──────────────────────────────────────────────────────
+
 
 def extract_text_from_pdfs(pdf_paths: list[str]) -> list[dict]:
     """
@@ -144,11 +161,13 @@ def extract_text_from_pdfs(pdf_paths: list[str]) -> list[dict]:
             if len(text) < 30:
                 continue
 
-            pages.append({
-                "page":   page_num,
-                "text":   text,
-                "source": filename,
-            })
+            pages.append(
+                {
+                    "page": page_num,
+                    "text": text,
+                    "source": filename,
+                }
+            )
 
         doc.close()
 
@@ -156,6 +175,7 @@ def extract_text_from_pdfs(pdf_paths: list[str]) -> list[dict]:
 
 
 # ─── DOCX Text Extraction ───────────────────────────────────────────────────
+
 
 def extract_text_from_docx(file_path: str, display_name: str = "") -> list[dict]:
     """
@@ -165,11 +185,19 @@ def extract_text_from_docx(file_path: str, display_name: str = "") -> list[dict]
     source = display_name or os.path.basename(file_path)
 
     if docx is None:
-        return [{"page": 1, "text": "python-docx not installed. Run: pip install python-docx", "source": source}]
+        return [
+            {
+                "page": 1,
+                "text": "python-docx not installed. Run: pip install python-docx",
+                "source": source,
+            }
+        ]
 
     try:
         document = docx.Document(file_path)
-        full_text = "\n".join(para.text for para in document.paragraphs if para.text.strip())
+        full_text = "\n".join(
+            para.text for para in document.paragraphs if para.text.strip()
+        )
 
         if not full_text.strip():
             return []
@@ -178,7 +206,7 @@ def extract_text_from_docx(file_path: str, display_name: str = "") -> list[dict]
         pages = []
         chunk_size = 2000
         for i, start in enumerate(range(0, len(full_text), chunk_size), 1):
-            segment = full_text[start:start + chunk_size].strip()
+            segment = full_text[start : start + chunk_size].strip()
             if segment:
                 pages.append({"page": i, "text": segment, "source": source})
         return pages
@@ -188,6 +216,7 @@ def extract_text_from_docx(file_path: str, display_name: str = "") -> list[dict]
 
 
 # ─── TXT / MD Text Extraction ───────────────────────────────────────────────
+
 
 def extract_text_from_txt(file_path: str, display_name: str = "") -> list[dict]:
     """
@@ -201,7 +230,7 @@ def extract_text_from_txt(file_path: str, display_name: str = "") -> list[dict]:
         pages = []
         chunk_size = 2000
         for i, start in enumerate(range(0, len(text), chunk_size), 1):
-            segment = text[start:start + chunk_size].strip()
+            segment = text[start : start + chunk_size].strip()
             if segment:
                 pages.append({"page": i, "text": segment, "source": source})
         return pages
@@ -211,6 +240,7 @@ def extract_text_from_txt(file_path: str, display_name: str = "") -> list[dict]:
 
 
 # ─── Text Chunking ────────────────────────────────────────────────────────────
+
 
 def split_into_chunks(pages: list[dict]) -> list[dict]:
     """
@@ -223,23 +253,25 @@ def split_into_chunks(pages: list[dict]) -> list[dict]:
     chunk_id = 0
 
     for page_data in pages:
-        text   = page_data["text"]
-        page   = page_data["page"]
+        text = page_data["text"]
+        page = page_data["page"]
         source = page_data["source"]
 
         start = 0
         while start < len(text):
-            end   = start + CHUNK_SIZE
+            end = start + CHUNK_SIZE
             chunk = text[start:end]
             chunk = re.sub(r"\s+", " ", chunk).strip()
 
             if len(chunk) > 50:
-                chunks.append({
-                    "chunk_id": chunk_id,
-                    "page":     page,
-                    "source":   source,
-                    "text":     chunk,
-                })
+                chunks.append(
+                    {
+                        "chunk_id": chunk_id,
+                        "page": page,
+                        "source": source,
+                        "text": chunk,
+                    }
+                )
                 chunk_id += 1
 
             start += CHUNK_SIZE - CHUNK_OVERLAP
@@ -248,6 +280,7 @@ def split_into_chunks(pages: list[dict]) -> list[dict]:
 
 
 # ─── FAISS Index Builder ──────────────────────────────────────────────────────
+
 
 def build_faiss_index(chunks: list[dict]) -> tuple[faiss.IndexFlatL2, list[dict]]:
     """
@@ -260,11 +293,15 @@ def build_faiss_index(chunks: list[dict]) -> tuple[faiss.IndexFlatL2, list[dict]
 
     texts = [c["text"] for c in chunks]
 
-    embeddings = embedding_model.encode(
-        texts,
-        show_progress_bar=False,
-        convert_to_numpy=True,
-    ).astype("float32")
+    embeddings = (
+        get_embedding_model()
+        .encode(
+            texts,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+        )
+        .astype("float32")
+    )
 
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
@@ -275,6 +312,7 @@ def build_faiss_index(chunks: list[dict]) -> tuple[faiss.IndexFlatL2, list[dict]
 
 
 # ─── Generic text extraction helper ──────────────────────────────────────────
+
 
 def _extract_text_from_bytes(file_bytes: bytes, filename: str, ext: str) -> str:
     """
@@ -288,9 +326,14 @@ def _extract_text_from_bytes(file_bytes: bytes, filename: str, ext: str) -> str:
 
         if ext in {".html", ".htm"}:
             import re
+
             html = file_bytes.decode("utf-8", errors="replace")
-            html = re.sub(r"<style[^>]*>.*?</style>", " ", html, flags=re.DOTALL | re.IGNORECASE)
-            html = re.sub(r"<script[^>]*>.*?</script>", " ", html, flags=re.DOTALL | re.IGNORECASE)
+            html = re.sub(
+                r"<style[^>]*>.*?</style>", " ", html, flags=re.DOTALL | re.IGNORECASE
+            )
+            html = re.sub(
+                r"<script[^>]*>.*?</script>", " ", html, flags=re.DOTALL | re.IGNORECASE
+            )
             html = re.sub(r"<[^>]+>", " ", html)
             return re.sub(r"\s+", " ", html).strip()
 
@@ -301,6 +344,7 @@ def _extract_text_from_bytes(file_bytes: bytes, filename: str, ext: str) -> str:
             try:
                 from docx import Document as DocxDocument
                 from io import BytesIO
+
                 doc = DocxDocument(BytesIO(file_bytes))
                 return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
             except ImportError:
@@ -315,6 +359,7 @@ def _extract_text_from_bytes(file_bytes: bytes, filename: str, ext: str) -> str:
 
 # ─── Context Retrieval ────────────────────────────────────────────────────────
 
+
 def retrieve_context(
     query: str,
     index: faiss.IndexFlatL2,
@@ -324,10 +369,14 @@ def retrieve_context(
     """
     Find the most relevant chunks for a user's query using FAISS.
     """
-    query_vector = embedding_model.encode(
-        [query],
-        convert_to_numpy=True,
-    ).astype("float32")
+    query_vector = (
+        get_embedding_model()
+        .encode(
+            [query],
+            convert_to_numpy=True,
+        )
+        .astype("float32")
+    )
 
     distances, indices = index.search(query_vector, top_k)
 
@@ -343,6 +392,7 @@ def retrieve_context(
 
 
 # ─── Free Chat (No Document) ──────────────────────────────────────────────────
+
 
 def generate_free_answer(
     user_question: str,
@@ -376,10 +426,15 @@ def generate_free_answer(
         max_tokens=3000,
     )
 
-    return {"answer": response.choices[0].message.content.strip(), "sources": [], "mode": "free"}
+    return {
+        "answer": response.choices[0].message.content.strip(),
+        "sources": [],
+        "mode": "free",
+    }
 
 
 # ─── Document Q&A Answer Generation ──────────────────────────────────────────
+
 
 def generate_answer(
     user_question: str,
@@ -449,6 +504,7 @@ def generate_answer(
 
 # ─── Web Search Answer Generation ────────────────────────────────────────────
 
+
 def generate_web_answer(
     user_question: str,
     web_results: list[dict],
@@ -473,9 +529,7 @@ def generate_web_answer(
     context_parts = []
     for i, r in enumerate(web_results, 1):
         context_parts.append(
-            f"[Web Result {i}] {r['title']}\n"
-            f"URL: {r['url']}\n"
-            f"{r['snippet']}"
+            f"[Web Result {i}] {r['title']}\n" f"URL: {r['url']}\n" f"{r['snippet']}"
         )
     context_text = "\n\n---\n\n".join(context_parts)
 
@@ -509,6 +563,7 @@ def generate_web_answer(
 
 
 # ─── Image Analysis ───────────────────────────────────────────────────────────
+
 
 def analyze_image(
     image_bytes: bytes,
@@ -549,7 +604,11 @@ def analyze_image(
         },
         {
             "type": "text",
-            "text": user_prompt if user_prompt.strip() else "Please describe and analyze this image in detail.",
+            "text": (
+                user_prompt
+                if user_prompt.strip()
+                else "Please describe and analyze this image in detail."
+            ),
         },
     ]
 
@@ -580,6 +639,7 @@ def analyze_image(
         # Use Groq for vision (supports llama vision models)
         if LLM_PROVIDER == "groq":
             from groq import Groq
+
             vision_client = Groq(api_key=GROQ_API_KEY)
             response = vision_client.chat.completions.create(
                 model=GROQ_VISION_MODEL,
@@ -608,6 +668,7 @@ def analyze_image(
 
 
 # ─── URL Summarization ────────────────────────────────────────────────────────
+
 
 def summarize_url_content(
     url: str,
@@ -647,6 +708,7 @@ def summarize_url_content(
 
 # ─── Universal Document Analysis ──────────────────────────────────────────────
 
+
 def analyze_document_with_context(
     file_bytes: bytes,
     filename: str,
@@ -671,7 +733,7 @@ def analyze_document_with_context(
     if not raw_text or len(raw_text.strip()) < 20:
         return {
             "answer": f"⚠️ Could not extract readable text from **{filename}**. "
-                      "The file may be binary or in an unsupported format.",
+            "The file may be binary or in an unsupported format.",
             "sources": [],
             "mode": "document",
         }
@@ -716,4 +778,8 @@ def analyze_document_with_context(
     )
 
     answer = response.choices[0].message.content.strip()
-    return {"answer": answer, "sources": [{"source": filename, "page": 1}], "mode": "document"}
+    return {
+        "answer": answer,
+        "sources": [{"source": filename, "page": 1}],
+        "mode": "document",
+    }
